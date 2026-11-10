@@ -112,20 +112,124 @@ final class Outbox
         return new OutboxConfig();
     }
 
+    /**
+     * Opens the PDO connection the outbox uses.
+     *
+     * CodeIgniter talks to the database through its own drivers (MySQLi,
+     * Postgre, SQLite3), which do not expose a PDO handle. The outbox needs
+     * PDO, so the connection is built from the CodeIgniter database config
+     * instead. Both sides then point at the same database.
+     */
     private static function pdo(OutboxConfig $settings): PDO
     {
         if ($settings->pdo instanceof PDO) {
             return $settings->pdo;
         }
 
-        $connection = $settings->connection !== '' ? $settings->connection : null;
-        $pdo = \Config\Database::connect($connection, true)->getConnection();
+        $group = $settings->connection !== '' ? $settings->connection : 'default';
+        $config = self::databaseConfig($group);
 
-        if (! $pdo instanceof PDO) {
-            throw new \RuntimeException('The configured database connection does not expose a PDO instance.');
-        }
+        $pdo = new PDO(
+            self::dsn($config),
+            (string) ($config['username'] ?? ''),
+            (string) ($config['password'] ?? ''),
+            [
+                PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+                PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+            ],
+        );
 
         return $pdo;
+    }
+
+    /**
+     * Reads a connection group from the CodeIgniter database config.
+     *
+     * @return array<string, mixed>
+     */
+    public static function databaseConfig(string $group): array
+    {
+        $config = self::rawDatabaseConfig();
+
+        $connection = $config[$group] ?? null;
+
+        if (! is_array($connection)) {
+            throw new \RuntimeException(sprintf(
+                'The database connection "%s" is not configured.',
+                $group,
+            ));
+        }
+
+        return $connection;
+    }
+
+    /**
+     * The raw database config, whichever way this application exposes it.
+     *
+     * @return array<string, mixed>
+     */
+    private static function rawDatabaseConfig(): array
+    {
+        if (function_exists('config')) {
+            $config = config('Database');
+
+            if (is_array($config)) {
+                return $config;
+            }
+        }
+
+        if (! class_exists(\Config\Database::class)) {
+            return [];
+        }
+
+        $config = config(\Config\Database::class);
+
+        if (! is_object($config)) {
+            return [];
+        }
+
+        $groups = [];
+
+        foreach (get_object_vars($config) as $name => $value) {
+            if (is_array($value)) {
+                $groups[$name] = $value;
+            }
+        }
+
+        return $groups;
+    }
+
+    /**
+     * Builds a PDO DSN from a CodeIgniter database config.
+     *
+     * @param array<string, mixed> $config
+     */
+    public static function dsn(array $config): string
+    {
+        $driver = (string) ($config['DBDriver'] ?? 'MySQLi');
+        $database = (string) ($config['database'] ?? '');
+
+        // A ready-made DSN wins over anything the adapter could build.
+        if (! empty($config['DSN'])) {
+            return (string) $config['DSN'];
+        }
+
+        return match ($driver) {
+            'SQLite3' => 'sqlite:' . $database,
+            'Postgre' => sprintf(
+                'pgsql:host=%s;port=%d;dbname=%s',
+                (string) ($config['hostname'] ?? 'localhost'),
+                (int) ($config['port'] ?? 5432),
+                $database,
+            ),
+            default => sprintf(
+                'mysql:host=%s;port=%d;dbname=%s;charset=%s',
+                (string) ($config['hostname'] ?? 'localhost'),
+                (int) ($config['port'] ?? 3306),
+                $database,
+                (string) ($config['charset'] ?? 'utf8mb4'),
+            ),
+        };
     }
 
     private static function publisher(OutboxConfig $settings): Publisher

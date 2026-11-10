@@ -87,7 +87,7 @@ final class HttpPublisher implements Publisher
         }
 
         $result = ($this->transport)($message, $headers);
-        $status = (int) ($result['status'] ?? 0);
+        $status = (int) $result['status'];
 
         if ($status < 200 || $status >= 300) {
             throw new PublishFailedException(

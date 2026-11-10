@@ -51,7 +51,28 @@ jobs:
           coverage: none
 
       - name: Check the syntax of every file
-        run: find src tests bin -name '*.php' -print0 | xargs -0 -n1 php -l
+        run: find src tests bin examples -name '*.php' -print0 | xargs -0 -n1 php -l
+
+  static-analysis:
+    runs-on: ubuntu-latest
+
+    name: Static analysis
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: pdo, mbstring
+          coverage: none
+
+      - name: Install dependencies
+        uses: ramsey/composer-install@v3
+
+      - name: Run PHPStan
+        run: vendor/bin/phpstan analyse --no-progress
 
   composer:
     runs-on: ubuntu-latest

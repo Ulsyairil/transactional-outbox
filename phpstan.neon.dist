@@ -1,0 +1,18 @@
+parameters:
+    level: 6
+    paths:
+        - src/Core
+        - src/Adapter/Laravel
+        - src/Adapter/CodeIgniter4
+        - src/Adapter/CakePHP
+        - src/Adapter/Symfony
+        - bin
+    treatPhpDocTypesAsCertain: false
+    excludePaths:
+        # Yii 2 needs bower-asset packages to install, so it is not part of the
+        # analysis. Its adapter is covered by the config shape test.
+        - src/Adapter/Yii
+    bootstrapFiles:
+        # CodeIgniter ships its helper functions in a plain file instead of
+        # autoloading them.
+        - vendor/codeigniter4/framework/system/Common.php

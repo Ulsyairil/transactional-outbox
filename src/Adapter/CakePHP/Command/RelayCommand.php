@@ -12,9 +12,9 @@ use TransactionalOutbox\Adapter\CakePHP\Outbox;
 
 final class RelayCommand extends Command
 {
-    protected static $defaultName = 'outbox:relay';
+    protected static string $defaultName = 'outbox:relay';
 
-    protected static $defaultDescription = 'Deliver pending outbox messages.';
+    protected static string $defaultDescription = 'Deliver pending outbox messages.';
 
     public function buildOptionParser(ConsoleOptionParser $parser): ConsoleOptionParser
     {
@@ -32,7 +32,7 @@ final class RelayCommand extends Command
         return $parser;
     }
 
-    public function execute(Arguments $args, ConsoleIo $io): ?int
+    public function execute(Arguments $args, ConsoleIo $io): int
     {
         $outbox = Outbox::make();
         $forever = (bool) $args->getOption('forever');

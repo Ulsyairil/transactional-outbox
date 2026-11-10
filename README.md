@@ -4,7 +4,7 @@
 [![Packagist Version](https://img.shields.io/packagist/v/ulsyairil/transactional-outbox.svg)](https://packagist.org/packages/ulsyairil/transactional-outbox)
 [![Packagist Downloads](https://img.shields.io/packagist/dt/ulsyairil/transactional-outbox.svg)](https://packagist.org/packages/ulsyairil/transactional-outbox)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Tests](https://img.shields.io/badge/tests-80%20passing-brightgreen.svg)](#testing)
+[![Tests](https://img.shields.io/badge/tests-87%20passing-brightgreen.svg)](#testing)
 [![External calls](https://img.shields.io/badge/external%20calls-zero-success.svg)](#why-local)
 
 Store events in the **same database transaction** as your business writes, then

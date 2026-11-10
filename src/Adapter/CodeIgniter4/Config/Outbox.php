@@ -41,7 +41,8 @@ class Outbox
     public mixed $publisher = null;
 
     /**
-     * Reuse an existing PDO connection instead of asking the framework for one.
+     * Reuse an existing PDO connection instead of opening one from the
+     * database config.
      */
     public mixed $pdo = null;
 

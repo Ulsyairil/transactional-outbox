@@ -5,21 +5,35 @@ declare(strict_types=1);
 namespace TransactionalOutbox\Adapter\CakePHP;
 
 use Cake\Console\CommandCollection;
+use Cake\Core\BasePlugin;
 use Cake\Core\Configure;
 use Cake\Core\ContainerInterface;
 use Cake\Core\PluginApplicationInterface;
-use Cake\Http\BaseApplication;
+use Cake\Http\MiddlewareQueue;
+use Cake\Routing\RouteBuilder;
 use TransactionalOutbox\Adapter\CakePHP\Command\RelayCommand;
 use TransactionalOutbox\Adapter\CakePHP\Config\Outbox as OutboxConfig;
 
 /**
- * Registers the outbox services on a CakePHP application.
+ * Registers the outbox on a CakePHP application.
  *
- * Add to config/bootstrap.php:
- *   (new TransactionalOutbox\Adapter\CakePHP\OutboxPlugin())->bootstrap();
+ * Load it as a plugin in config/bootstrap.php:
+ *
+ *   $this->addPlugin('TransactionalOutbox/Adapter/CakePHP');
+ *
+ * or by pointing the application at the class:
+ *
+ *   (new \TransactionalOutbox\Adapter\CakePHP\OutboxPlugin())->bootstrap($app);
+ *
+ * The plugin only normalises the config and registers the console command. The
+ * outbox itself is created lazily by the factory, so nothing touches the
+ * database until the first message is written.
  */
-final class OutboxPlugin implements PluginApplicationInterface
+class OutboxPlugin extends BasePlugin
 {
+    /**
+     * Normalises the config array into an OutboxConfig instance.
+     */
     public function bootstrap(PluginApplicationInterface $app): void
     {
         $config = Configure::read(Outbox::CONFIG_KEY);
@@ -28,32 +42,16 @@ final class OutboxPlugin implements PluginApplicationInterface
             return;
         }
 
-        $settings = new OutboxConfig();
-
-        foreach (get_object_vars($settings) as $property => $default) {
-            if (! array_key_exists($property, $config)) {
-                continue;
-            }
-
-            $value = $config[$property];
-
-            $settings->{$property} = match (true) {
-                is_bool($default) => (bool) $value,
-                is_int($default) => (int) $value,
-                is_string($default) => (string) $value,
-                default => $value,
-            };
-        }
-
-        Configure::write(Outbox::CONFIG_KEY, $settings);
+        Configure::write(Outbox::CONFIG_KEY, Outbox::settingsFromArray($config));
     }
 
-    public function middleware(BaseApplication $app): void
+    public function routes(RouteBuilder $routes): void
     {
     }
 
-    public function routes(\Cake\Routing\RouteBuilder $routes): void
+    public function middleware(MiddlewareQueue $middlewareQueue): MiddlewareQueue
     {
+        return $middlewareQueue;
     }
 
     public function services(ContainerInterface $container): void

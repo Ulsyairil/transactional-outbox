@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Facade;
 use TransactionalOutbox\Core\Outbox;
 
 /**
- * @method static \TransactionalOutbox\Core\OutboxMessage publish(string $eventType, array $payload = [], ?string $aggregateType = null, ?string $aggregateId = null, ?string $deduplicationKey = null, array $headers = [])
+ * @method static \TransactionalOutbox\Core\OutboxMessage publish(string $eventType, array<string, mixed> $payload = [], ?string $aggregateType = null, ?string $aggregateId = null, ?string $deduplicationKey = null, array<string, string> $headers = [])
  * @method static \TransactionalOutbox\Core\OutboxMessage store(\TransactionalOutbox\Core\OutboxMessage $message)
  * @method static mixed transaction(callable $work, callable $message)
  * @method static int pendingCount()

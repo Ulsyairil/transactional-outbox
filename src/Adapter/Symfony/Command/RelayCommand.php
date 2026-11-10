@@ -13,9 +13,9 @@ use TransactionalOutbox\Core\Outbox;
 
 final class RelayCommand extends Command
 {
-    protected static $defaultName = 'outbox:relay';
+    protected static string $defaultName = 'outbox:relay';
 
-    protected static $defaultDescription = 'Deliver pending outbox messages.';
+    protected static string $defaultDescription = 'Deliver pending outbox messages.';
 
     public function __construct(
         private readonly DatabaseRelay $relay,

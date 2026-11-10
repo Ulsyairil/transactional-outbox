@@ -94,6 +94,16 @@ final class Outbox
             return new OutboxConfig();
         }
 
+        return self::settingsFromArray($config);
+    }
+
+    /**
+     * Maps a config array onto the settings object.
+     *
+     * @param array<string, mixed> $config
+     */
+    public static function settingsFromArray(array $config): OutboxConfig
+    {
         $settings = new OutboxConfig();
 
         foreach (get_object_vars($settings) as $property => $default) {
@@ -122,31 +132,78 @@ final class Outbox
         return $settings;
     }
 
+    /**
+     * Opens the PDO connection the outbox uses.
+     *
+     * CakePHP keeps its PDO handle private inside the driver, so the
+     * connection is built from the datasource config instead. Both sides then
+     * point at the same database.
+     */
     private static function pdo(OutboxConfig $settings): PDO
     {
         if ($settings->pdo instanceof PDO) {
             return $settings->pdo;
         }
 
-        $connection = ConnectionManager::get($settings->connection !== '' ? $settings->connection : 'default');
+        $name = $settings->connection !== '' ? $settings->connection : 'default';
+        $connection = ConnectionManager::get($name);
+        $config = $connection->config();
 
-        if (! method_exists($connection, 'getDriver')) {
-            throw new \RuntimeException('The configured CakePHP connection does not expose a driver.');
+        if ($config === []) {
+            throw new \RuntimeException(sprintf(
+                'The CakePHP datasource "%s" is not configured.',
+                $name,
+            ));
         }
 
-        $driver = $connection->getDriver();
-
-        if (! method_exists($driver, 'getConnection')) {
-            throw new \RuntimeException('The configured CakePHP connection does not expose a PDO connection.');
-        }
-
-        $pdo = $driver->getConnection();
-
-        if (! $pdo instanceof PDO) {
-            throw new \RuntimeException('The configured CakePHP connection does not expose a PDO connection.');
-        }
+        $pdo = new PDO(
+            self::dsn($config),
+            (string) ($config['username'] ?? ''),
+            (string) ($config['password'] ?? ''),
+            [
+                PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+                PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+            ],
+        );
 
         return $pdo;
+    }
+
+    /**
+     * Builds a PDO DSN from a CakePHP datasource config.
+     *
+     * @param array<string, mixed> $config
+     */
+    private static function dsn(array $config): string
+    {
+        $driver = (string) ($config['driver'] ?? 'Cake\\Database\\Driver\\Mysql');
+        $database = (string) ($config['database'] ?? '');
+
+        // A ready-made DSN wins over anything the adapter could build.
+        if (! empty($config['dsn'])) {
+            return (string) $config['dsn'];
+        }
+
+        if (str_contains($driver, 'Sqlite')) {
+            return 'sqlite:' . $database;
+        }
+
+        if (str_contains($driver, 'Postgres')) {
+            return sprintf(
+                'pgsql:host=%s;port=%d;dbname=%s',
+                (string) ($config['host'] ?? 'localhost'),
+                (int) ($config['port'] ?? 5432),
+                $database,
+            );
+        }
+
+        return sprintf(
+            'mysql:host=%s;port=%d;dbname=%s;charset=%s',
+            (string) ($config['host'] ?? 'localhost'),
+            (int) ($config['port'] ?? 3306),
+            $database,
+            (string) ($config['encoding'] ?? 'utf8mb4'),
+        );
     }
 
     private static function publisher(OutboxConfig $settings): Publisher

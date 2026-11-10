@@ -33,13 +33,16 @@
         "cakephp/cakephp": "^4.5 || ^5.0",
         "codeigniter4/framework": "^4.4",
         "illuminate/config": "^10.0 || ^11.0 || ^12.0",
+        "illuminate/console": "^10.0 || ^11.0 || ^12.0",
         "illuminate/database": "^10.0 || ^11.0 || ^12.0",
         "illuminate/events": "^10.0 || ^11.0 || ^12.0",
         "illuminate/support": "^10.0 || ^11.0 || ^12.0",
+        "phpstan/phpstan": "^2.2",
         "phpunit/phpunit": "^10.5 || ^11.0",
         "symfony/config": "^6.4 || ^7.0",
         "symfony/console": "^6.4 || ^7.0",
         "symfony/dependency-injection": "^6.4 || ^7.0",
+        "symfony/http-kernel": "^6.4 || ^7.0",
         "vlucas/phpdotenv": "^5.6"
     },
     "suggest": {
@@ -66,7 +69,8 @@
     "scripts": {
         "test": "phpunit",
         "test:coverage": "phpunit --coverage-text",
-        "matrix": "bash scripts/test-matrix.sh"
+        "matrix": "bash scripts/test-matrix.sh",
+        "analyse": "phpstan analyse --no-progress"
     },
     "config": {
         "sort-packages": true

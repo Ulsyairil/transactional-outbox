@@ -89,7 +89,7 @@ final class TransactionalOutboxServiceProvider extends ServiceProvider
     /**
      * @param array<string, mixed> $config
      */
-    private function pdo($app, array $config): \PDO
+    private function pdo(mixed $app, array $config): \PDO
     {
         $connection = $config['connection'] ?? null;
 
