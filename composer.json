@@ -1,0 +1,76 @@
+{
+    "name": "ulsyairil/transactional-outbox",
+    "description": "Transactional Outbox pattern for PHP: store events in the same database transaction as your business writes, then relay them reliably. Framework-agnostic core with adapters for Laravel, CodeIgniter 4, Symfony, Yii 2 and CakePHP.",
+    "type": "library",
+    "license": "MIT",
+    "homepage": "https://github.com/ulsyairil/transactional-outbox",
+    "support": {
+        "issues": "https://github.com/ulsyairil/transactional-outbox/issues"
+    },
+    "keywords": [
+        "outbox",
+        "transactional-outbox",
+        "events",
+        "messaging",
+        "reliability",
+        "database",
+        "pdo",
+        "sqlite",
+        "mysql",
+        "postgresql",
+        "laravel",
+        "codeigniter",
+        "symfony",
+        "yii",
+        "cakephp"
+    ],
+    "require": {
+        "php": ">=8.1",
+        "ext-pdo": "*",
+        "ext-json": "*"
+    },
+    "require-dev": {
+        "cakephp/cakephp": "^4.5 || ^5.0",
+        "codeigniter4/framework": "^4.4",
+        "illuminate/config": "^10.0 || ^11.0 || ^12.0",
+        "illuminate/database": "^10.0 || ^11.0 || ^12.0",
+        "illuminate/events": "^10.0 || ^11.0 || ^12.0",
+        "illuminate/support": "^10.0 || ^11.0 || ^12.0",
+        "phpunit/phpunit": "^10.5 || ^11.0",
+        "symfony/config": "^6.4 || ^7.0",
+        "symfony/console": "^6.4 || ^7.0",
+        "symfony/dependency-injection": "^6.4 || ^7.0",
+        "vlucas/phpdotenv": "^5.6"
+    },
+    "suggest": {
+        "illuminate/support": "Required for the Laravel adapter (^10.0 || ^11.0 || ^12.0)",
+        "codeigniter4/framework": "Required for the CodeIgniter 4 adapter (^4.4)",
+        "symfony/console": "Required for the Symfony console command (^6.4 || ^7.0)",
+        "symfony/http-kernel": "Required for the Symfony adapter (^6.4 || ^7.0)",
+        "yiisoft/yii2": "Required for the Yii 2 adapter (^2.0)",
+        "cakephp/cakephp": "Required for the CakePHP adapter (^4.5 || ^5.0)"
+    },
+    "autoload": {
+        "psr-4": {
+            "TransactionalOutbox\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "TransactionalOutbox\\Tests\\": "tests/"
+        }
+    },
+    "bin": [
+        "bin/outbox-relay"
+    ],
+    "scripts": {
+        "test": "phpunit",
+        "test:coverage": "phpunit --coverage-text",
+        "matrix": "bash scripts/test-matrix.sh"
+    },
+    "config": {
+        "sort-packages": true
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}

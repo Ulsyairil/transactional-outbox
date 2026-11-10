@@ -1,0 +1,135 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+/**
+ * Relay worker for the transactional outbox.
+ *
+ * Usage:
+ *   vendor/bin/outbox-relay [options]
+ *
+ * Options:
+ *   --dsn=sqlite:/path/to/app.sqlite   Database DSN (required)
+ *   --user=                             Database user
+ *   --password=                         Database password
+ *   --once                              Run one cycle and exit (default)
+ *   --forever                           Keep running
+ *   --sleep=1                           Seconds between cycles in --forever mode
+ *   --max-attempts=5                    Delivery attempts before dead-lettering
+ *   --batch-size=100                    Messages claimed per cycle
+ *   --publisher=log                     log | callback:<file>
+ *
+ * The publisher is the only part that talks to the outside world. Without a
+ * publisher the worker writes each message as one JSON line to stdout, which
+ * is enough to drain the outbox into a log pipeline.
+ */
+
+$autoload = null;
+
+foreach ([__DIR__ . '/../../autoload.php', __DIR__ . '/../vendor/autoload.php'] as $candidate) {
+    if (file_exists($candidate)) {
+        $autoload = $candidate;
+
+        break;
+    }
+}
+
+if ($autoload === null) {
+    fwrite(STDERR, "Composer autoloader not found. Run composer install first." . PHP_EOL);
+
+    exit(1);
+}
+
+require $autoload;
+
+use TransactionalOutbox\Core\OutboxFactory;
+use TransactionalOutbox\Core\Publisher;
+use TransactionalOutbox\Core\Publisher\CallbackPublisher;
+use TransactionalOutbox\Core\Publisher\LogPublisher;
+
+$options = getopt('', [
+    'dsn:',
+    'user:',
+    'password:',
+    'once',
+    'forever',
+    'sleep:',
+    'max-attempts:',
+    'batch-size:',
+    'publisher:',
+    'help',
+]);
+
+if (isset($options['help']) || ! isset($options['dsn'])) {
+    fwrite(STDERR, "Usage: outbox-relay --dsn=<dsn> [--forever] [--publisher=log]" . PHP_EOL);
+
+    exit(isset($options['help']) ? 0 : 1);
+}
+
+$dsn = (string) $options['dsn'];
+$user = (string) ($options['user'] ?? '');
+$password = (string) ($options['password'] ?? '');
+
+$pdo = new PDO($dsn, $user, $password);
+$pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
+$config = [
+    'max_attempts' => (int) ($options['max-attempts'] ?? 5),
+    'batch_size' => (int) ($options['batch-size'] ?? 100),
+];
+
+$outbox = OutboxFactory::fromConnection($pdo, $config);
+
+$publisherOption = (string) ($options['publisher'] ?? 'log');
+
+$publisher = match (true) {
+    str_starts_with($publisherOption, 'callback:') => new CallbackPublisher(
+        (static function () use ($publisherOption): callable {
+            $file = substr($publisherOption, strlen('callback:'));
+
+            if (! is_file($file)) {
+                fwrite(STDERR, sprintf('Publisher file "%s" not found.', $file) . PHP_EOL);
+
+                exit(1);
+            }
+
+            $callback = require $file;
+
+            if (! is_callable($callback)) {
+                fwrite(STDERR, sprintf('Publisher file "%s" must return a callable.', $file) . PHP_EOL);
+
+                exit(1);
+            }
+
+            return $callback;
+        })()
+    ),
+    default => new LogPublisher(),
+};
+
+$relay = OutboxFactory::relayFrom($outbox->storeInstance(), $publisher, $config);
+
+$forever = isset($options['forever']);
+$sleep = max(1, (int) ($options['sleep'] ?? 1));
+
+do {
+    $result = $relay->run();
+
+    if (! $result->isEmpty()) {
+        fwrite(STDOUT, json_encode($result->toArray(), JSON_UNESCAPED_SLASHES) . PHP_EOL);
+    }
+
+    if (! $forever) {
+        break;
+    }
+
+    sleep($sleep);
+} while (true);
+
+fwrite(STDOUT, json_encode([
+    'pending' => $outbox->pendingCount(),
+    'dead_lettered' => $outbox->deadLetterCount(),
+], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . PHP_EOL);
+
+exit(0);

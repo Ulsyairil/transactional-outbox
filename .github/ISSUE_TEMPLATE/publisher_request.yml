@@ -1,0 +1,42 @@
+name: Publisher request
+
+description: Suggest a publisher for a broker or a transport that is not supported yet.
+
+labels: ['publisher-request', needs-triage]
+
+body:
+  - type: input
+    id: publisher
+    attributes:
+      label: Publisher
+      description: The class name you would use.
+      placeholder: 'BrokerPublisher'
+    validations:
+      required: true
+
+  - type: dropdown
+    id: target
+    attributes:
+      label: Target
+      options:
+        - Message broker
+        - HTTP endpoint
+        - Framework event bus
+        - Database / queue table
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: api
+    attributes:
+      label: The API it should wrap
+      description: The client class, the method to call, the arguments it needs.
+    validations:
+      required: true
+
+  - type: textarea
+    id: samples
+    attributes:
+      label: Examples
+      description: A publish call that should work and one that should fail.

@@ -1,0 +1,61 @@
+name: Bug report
+
+description: Something in the transactional outbox does not work as documented.
+
+labels: [bug, needs-triage]
+
+body:
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What did you expect, and what happened instead?
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Minimal reproduction
+      description: The smallest snippet that shows the problem.
+    validations:
+      required: true
+
+  - type: input
+    id: versions
+    attributes:
+      label: Versions
+      placeholder: 'ulsyairil/transactional-outbox 1.0.0, PHP 8.3, Laravel 12, MySQL 8.0'
+    validations:
+      required: true
+
+  - type: dropdown
+    id: adapter
+    attributes:
+      label: Adapter
+      options:
+        - Core (plain PHP)
+        - Laravel
+        - CodeIgniter 4
+        - Symfony
+        - Yii 2
+        - CakePHP
+    validations:
+      required: true
+
+  - type: dropdown
+    id: database
+    attributes:
+      label: Database
+      options:
+        - SQLite
+        - MySQL / MariaDB
+        - PostgreSQL
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Errors or logs
+      description: The exception message, the relay output, anything that helps.
