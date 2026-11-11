@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Planned
+
+- Inbox pattern for consumer-side deduplication
+- Snapshot and replay of the dead letter table
+- Per-tenant lanes
+- Prometheus metrics hooks
+- Signed batches for tamper evidence
+
+## [1.0.1] - 2026-11-11
+
+Bug fixes for the schema install and the dependency matrix.
+
 ### Fixed
 
 - **MySQL schema install.** The auto-increment column is now declared as a
@@ -36,14 +48,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   supports PHP 8.1 carries an advisory. `config.policy.advisories.ignore` in
   `composer.json` scopes the exemption to that package, so PHP 8.1 stays
   installable without disabling the check for everything else.
-
-### Planned
-
-- Inbox pattern for consumer-side deduplication
-- Snapshot and replay of the dead letter table
-- Per-tenant lanes
-- Prometheus metrics hooks
-- Signed batches for tamper evidence
 
 ## [1.0.0] - 2026-11-10
 
@@ -77,5 +81,6 @@ First stable release.
 - **Tests.** 80 tests covering the store, the relay, atomicity, concurrency,
   the three database engines, and every adapter.
 
-[Unreleased]: https://github.com/ulsyairil/transactional-outbox/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/ulsyairil/transactional-outbox/compare/v1.0.1...HEAD
+[1.0.1]: https://github.com/ulsyairil/transactional-outbox/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/ulsyairil/transactional-outbox/releases/tag/v1.0.0
