@@ -14,6 +14,10 @@ final class Relay extends BaseCommand
     protected $name = 'outbox:relay';
     protected $description = 'Deliver pending outbox messages.';
     protected $usage = 'outbox:relay [once|forever]';
+
+    /**
+     * @var array<string, string>
+     */
     protected $arguments = [
         'action' => 'once (default) or forever',
     ];

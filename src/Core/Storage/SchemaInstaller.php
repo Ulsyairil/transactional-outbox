@@ -85,14 +85,14 @@ final class SchemaInstaller
         // ignore NULLs. PostgreSQL and SQLite do that by default, MySQL does
         // not, hence the 191 character prefix length on MySQL.
         $this->ensureIndex(
-            'outbox_messages_dedup_uq',
+            $this->indexName($table, 'dedup_uq'),
             $table,
             'deduplication_key',
             true,
         );
 
-        $this->ensureIndex('outbox_messages_pending_idx', $table, 'available_at, id');
-        $this->ensureIndex('outbox_messages_batch_idx', $table, 'batch_id');
+        $this->ensureIndex($this->indexName($table, 'pending_idx'), $table, 'available_at, id');
+        $this->ensureIndex($this->indexName($table, 'batch_idx'), $table, 'batch_id');
     }
 
     private function installBatches(): void
@@ -133,7 +133,19 @@ final class SchemaInstaller
             $this->dialect->primaryKeyDefinition(),
         ));
 
-        $this->ensureIndex('outbox_dead_letters_event_idx', $table, 'event_type');
+        $this->ensureIndex($this->indexName($table, 'event_idx'), $table, 'event_type');
+    }
+
+    /**
+     * Builds a table-scoped index name.
+     *
+     * Index names must be unique per schema in PostgreSQL and SQLite, so a
+     * fixed name would collide as soon as a second outbox table exists.
+     * MySQL caps identifiers at 64 characters.
+     */
+    private function indexName(string $table, string $suffix): string
+    {
+        return substr($table, 0, 40) . '_' . $suffix;
     }
 
     /**

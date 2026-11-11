@@ -78,7 +78,8 @@ final class SqlDialect
     {
         return match ($this->driver) {
             self::SQLITE => 'id INTEGER PRIMARY KEY AUTOINCREMENT',
-            self::MYSQL => 'id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT',
+            // MySQL requires the auto-increment column to be a key.
+            self::MYSQL => 'id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY',
             self::PGSQL => 'id BIGSERIAL PRIMARY KEY',
             default => throw new SchemaException(sprintf('Unsupported PDO driver "%s".', $this->driver)),
         };

@@ -43,6 +43,18 @@ final class SqlDialectTest extends TestCase
         self::assertStringContainsString('BIGSERIAL', SqlDialect::forDriver('pgsql')->primaryKeyDefinition());
     }
 
+    /**
+     * MySQL rejects an auto-increment column that is not a key:
+     * "there can be only one auto column and it must be defined as a key".
+     */
+    public function testMysqlAutoIncrementColumnIsAKey(): void
+    {
+        self::assertStringContainsString(
+            'PRIMARY KEY',
+            SqlDialect::forDriver('mysql')->primaryKeyDefinition(),
+        );
+    }
+
     public function testInsertIgnoreDuplicateSuffixPerEngine(): void
     {
         self::assertStringContainsString(

@@ -106,7 +106,7 @@ or an idempotent consumer when duplicates matter.
 
 ## Tests
 
-87 tests, 200 assertions, on PHP 8.1 through 8.5. MySQL and PostgreSQL engine
+94 tests, 220 assertions, on PHP 8.1 through 8.5. MySQL and PostgreSQL engine
 tests run in CI against real service containers.
 
 ## Links

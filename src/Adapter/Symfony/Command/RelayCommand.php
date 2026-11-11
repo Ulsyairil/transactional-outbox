@@ -13,9 +13,18 @@ use TransactionalOutbox\Core\Outbox;
 
 final class RelayCommand extends Command
 {
-    protected static string $defaultName = 'outbox:relay';
+    /**
+     * Symfony 6.4 declares these without a native type, 7.x declares them as
+     * string. Both are accepted, so the type is left off on purpose.
+     *
+     * @var string
+     */
+    protected static $defaultName = 'outbox:relay';
 
-    protected static string $defaultDescription = 'Deliver pending outbox messages.';
+    /**
+     * @var string
+     */
+    protected static $defaultDescription = 'Deliver pending outbox messages.';
 
     public function __construct(
         private readonly DatabaseRelay $relay,

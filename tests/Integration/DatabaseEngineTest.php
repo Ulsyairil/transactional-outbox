@@ -91,6 +91,62 @@ final class DatabaseEngineTest extends TestCase
         $store->uninstall();
     }
 
+    #[DataProvider('engines')]
+    public function testTheDeduplicationIndexExists(string $dsn, string $user, string $password, string $driver): void
+    {
+        $pdo = $this->connect($dsn, $user, $password, $driver);
+
+        $store = new PdoOutboxStore($pdo, OutboxConfig::fromArray([
+            'table' => 'outbox_messages_idx_test',
+            'batch_table' => 'outbox_batches_idx_test',
+            'dead_letter_table' => 'outbox_dead_letters_idx_test',
+        ]), $this->clock());
+        $store->install();
+
+        self::assertSame(
+            1,
+            $this->countIndexes($pdo, 'outbox_messages_idx_test', 'outbox_messages_idx_test_dedup_uq'),
+            'The unique index on deduplication_key is required by the upsert.',
+        );
+
+        $store->uninstall();
+    }
+
+    /**
+     * Two outbox tables in one schema must not share index names.
+     *
+     * PostgreSQL and SQLite scope index names per schema, so a fixed index
+     * name made the second install fail.
+     */
+    #[DataProvider('engines')]
+    public function testTwoOutboxTablesCanCoexistInOneSchema(string $dsn, string $user, string $password, string $driver): void
+    {
+        $pdo = $this->connect($dsn, $user, $password, $driver);
+
+        $first = new PdoOutboxStore($pdo, OutboxConfig::fromArray([
+            'table' => 'outbox_messages_a',
+            'batch_table' => 'outbox_batches_a',
+            'dead_letter_table' => 'outbox_dead_letters_a',
+        ]), $this->clock());
+        $first->install();
+
+        $second = new PdoOutboxStore($pdo, OutboxConfig::fromArray([
+            'table' => 'outbox_messages_b',
+            'batch_table' => 'outbox_batches_b',
+            'dead_letter_table' => 'outbox_dead_letters_b',
+        ]), $this->clock());
+        $second->install();
+
+        $first->store(OutboxMessage::create('order.created', ['id' => 1], deduplicationKey: 'shared'));
+        $second->store(OutboxMessage::create('order.created', ['id' => 1], deduplicationKey: 'shared'));
+
+        self::assertSame(1, $first->pendingCount());
+        self::assertSame(1, $second->pendingCount());
+
+        $first->uninstall();
+        $second->uninstall();
+    }
+
     private function connect(string $dsn, string $user, string $password, string $driver): PDO
     {
         if ($dsn === '') {
@@ -102,6 +158,26 @@ final class DatabaseEngineTest extends TestCase
         ]);
 
         return $pdo;
+    }
+
+    private function countIndexes(PDO $pdo, string $table, string $index): int
+    {
+        $driver = (string) $pdo->getAttribute(PDO::ATTR_DRIVER_NAME);
+
+        if ($driver === 'mysql') {
+            $statement = $pdo->prepare(
+                'SELECT COUNT(*) FROM information_schema.statistics
+                 WHERE table_schema = DATABASE() AND table_name = ? AND index_name = ?',
+            );
+        } else {
+            $statement = $pdo->prepare(
+                'SELECT COUNT(*) FROM pg_indexes WHERE tablename = ? AND indexname = ?',
+            );
+        }
+
+        $statement->execute([$table, $index]);
+
+        return (int) $statement->fetchColumn();
     }
 
     /**

@@ -33,6 +33,12 @@ class OutboxPlugin extends BasePlugin
 {
     /**
      * Normalises the config array into an OutboxConfig instance.
+     *
+     * CakePHP 5.0 declares PluginApplicationInterface as generic, later 5.x
+     * releases and 4.x do not. The subject type is irrelevant here, so the
+     * widest type that fits every supported release is used.
+     *
+     * @param PluginApplicationInterface<object> $app
      */
     public function bootstrap(PluginApplicationInterface $app): void
     {

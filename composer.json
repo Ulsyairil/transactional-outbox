@@ -73,7 +73,14 @@
         "analyse": "phpstan analyse --no-progress"
     },
     "config": {
-        "sort-packages": true
+        "sort-packages": true,
+        "policy": {
+            "advisories": {
+                "ignore": {
+                    "codeigniter4/framework": "CodeIgniter 4 releases that still support PHP 8.1 all carry advisories. The adapter only builds a PDO connection from the framework config, so the affected validation, upload and routing code paths are never used."
+                }
+            }
+        }
     },
     "minimum-stability": "stable",
     "prefer-stable": true

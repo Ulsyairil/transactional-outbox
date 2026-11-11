@@ -16,3 +16,16 @@ parameters:
         # CodeIgniter ships its helper functions in a plain file instead of
         # autoloading them.
         - vendor/codeigniter4/framework/system/Common.php
+    ignoreErrors:
+        # CakePHP 5.0 declares PluginApplicationInterface as generic, later 5.x
+        # releases and 4.x do not. The adapter documents the widest type that
+        # fits every supported release, which PHPStan rejects on the
+        # non-generic ones. Only one of the two identifiers fires per release,
+        # so an unmatched pattern must not fail the run.
+        -
+            identifier: generics.notGeneric
+            path: src/Adapter/CakePHP/OutboxPlugin.php
+        -
+            identifier: missingType.generics
+            path: src/Adapter/CakePHP/OutboxPlugin.php
+    reportUnmatchedIgnoredErrors: false

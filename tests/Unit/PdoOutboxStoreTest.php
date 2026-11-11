@@ -222,4 +222,48 @@ final class PdoOutboxStoreTest extends TestCase
         self::assertSame(0, $status['dead_lettered']);
         self::assertSame('sqlite', $status['driver']);
     }
+
+    /**
+     * Two outbox tables in one schema must not share index names.
+     *
+     * PostgreSQL and SQLite scope index names per schema, so a fixed index
+     * name made the second install fail and left the deduplication index
+     * missing, which broke ON CONFLICT.
+     */
+    public function testTwoOutboxTablesCanCoexistInOneSchema(): void
+    {
+        $pdo = $this->pdo();
+
+        $first = $this->store($pdo, ['table' => 'outbox_messages_a']);
+        $second = $this->store($pdo, [
+            'table' => 'outbox_messages_b',
+            'batch_table' => 'outbox_batches_b',
+            'dead_letter_table' => 'outbox_dead_letters_b',
+        ]);
+
+        $first->store(OutboxMessage::create('order.created', ['id' => 1], deduplicationKey: 'shared'));
+        $second->store(OutboxMessage::create('order.created', ['id' => 1], deduplicationKey: 'shared'));
+
+        self::assertSame(1, $first->pendingCount());
+        self::assertSame(1, $second->pendingCount());
+    }
+
+    /**
+     * The deduplication index must exist on the message table, because the
+     * insert relies on ON CONFLICT (deduplication_key).
+     */
+    public function testTheDeduplicationIndexIsCreated(): void
+    {
+        $pdo = $this->pdo();
+
+        $this->store($pdo);
+
+        $statement = $pdo->query(
+            "SELECT name FROM sqlite_master WHERE type = 'index' AND tbl_name = 'outbox_messages'",
+        );
+
+        $names = array_column($statement->fetchAll(\PDO::FETCH_ASSOC), 'name');
+
+        self::assertContains('outbox_messages_dedup_uq', $names);
+    }
 }

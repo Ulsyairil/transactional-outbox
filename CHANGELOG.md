@@ -7,6 +7,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **MySQL schema install.** The auto-increment column is now declared as a
+  primary key. MySQL rejects an `AUTO_INCREMENT` column that is not a key
+  with "Incorrect table definition; there can be only one auto column and it
+  must be defined as a key".
+- **Index names are table-scoped.** The dedup, pending, batch and event index
+  names are derived from the table name. PostgreSQL and SQLite scope index
+  names per schema, so a fixed name made a second outbox table fail to
+  install and left the deduplication index missing, which broke the
+  `ON CONFLICT` upsert.
+- **Symfony 6.4 compatibility.** The configuration tree no longer chains
+  through `end()`, whose return type differs between Symfony 6.4 and 7.x.
+- **PHPStan on the lowest dependency set.** The Symfony command no longer
+  declares a native type on `$defaultName` and `$defaultDescription`, the
+  CodeIgniter command documents its `$arguments` shape, and the CakePHP plugin
+  documents its generic subject type.
+
+### Changed
+
+- **CI matrix inputs.** `ramsey/composer-install` expects
+  `dependency-versions` with the values `lowest` and `highest`. The previous
+  `dependency-version` input with `prefer-lowest` and `prefer-stable` values
+  was ignored, so both jobs ran a plain update.
+- **Composer policy for CodeIgniter 4.** Composer 2.11 blocks versions with
+  active security advisories, and every CodeIgniter 4 release that still
+  supports PHP 8.1 carries an advisory. `config.policy.advisories.ignore` in
+  `composer.json` scopes the exemption to that package, so PHP 8.1 stays
+  installable without disabling the check for everything else.
+
 ### Planned
 
 - Inbox pattern for consumer-side deduplication

@@ -4,7 +4,7 @@
 [![Packagist Version](https://img.shields.io/packagist/v/ulsyairil/transactional-outbox.svg)](https://packagist.org/packages/ulsyairil/transactional-outbox)
 [![Packagist Downloads](https://img.shields.io/packagist/dt/ulsyairil/transactional-outbox.svg)](https://packagist.org/packages/ulsyairil/transactional-outbox)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Tests](https://img.shields.io/badge/tests-87%20passing-brightgreen.svg)](#testing)
+[![Tests](https://img.shields.io/badge/tests-94%20passing-brightgreen.svg)](#testing)
 [![External calls](https://img.shields.io/badge/external%20calls-zero-success.svg)](#why-local)
 
 Store events in the **same database transaction** as your business writes, then
@@ -70,6 +70,38 @@ Framework adapters are optional and installed only if you use them:
 | Symfony | `symfony/http-kernel` | 7.4 |
 | Yii 2 | `yiisoft/yii2` | 2.0 |
 | CakePHP | `cakephp/cakephp` | 5.4 |
+
+### PHP 8.1 and CodeIgniter 4
+
+The core runs on PHP 8.1. The CodeIgniter 4 adapter is the exception:
+CodeIgniter 4.7.4 and later require PHP 8.2, and every CodeIgniter 4 release
+that still supports PHP 8.1 carries a security advisory. Composer 2.11 and
+later block those versions by default.
+
+`composer.json` already scopes an exemption to that one package:
+
+```json
+"config": {
+    "policy": {
+        "advisories": {
+            "ignore": {
+                "codeigniter4/framework": "reason"
+            }
+        }
+    }
+}
+```
+
+The CodeIgniter adapter only reads the framework database config and opens a
+PDO connection. It never touches the upload, validation or routing code paths
+the advisories cover.
+
+If you prefer to leave the adapter out entirely, install without the dev
+dependencies:
+
+```bash
+composer install --no-dev
+```
 
 ## Install
 
@@ -458,7 +490,6 @@ Run the matrix on PHP 8.1 to 8.4 with Docker:
 ```bash
 composer matrix
 ```
-
 ## Security notes and limitations
 
 - **Payloads are not encrypted.** They sit in the database in plain JSON. Use
